@@ -12,6 +12,11 @@
 using namespace std;
 
 class Connect4{
+    /**
+     * Game is set up on a double array board
+     *     board[ ROW NUM (up and down) 0 is bottom ] [ COL NUM (left and right) 0 is left]
+     * 
+     **/
 
 private:
 
@@ -21,6 +26,7 @@ private:
     int board[6][7];
     int player1Score = 0;
     int player2Score = 0;
+
 public:
     Connect4(){
         for (int i=0;i<MAX_ROWS;i++){
@@ -76,11 +82,12 @@ public:
         return false;
     }
 
-    bool placePiece(int colNum, int piece){
+    // Puts a piece down. 
+    bool placePiece(int colNum, int playerNum){
         if (filled(colNum)) return false;
         for (int i=0;i<MAX_ROWS;i++){
             if (board[i][colNum]==0){
-                board[i][colNum] = piece;
+                board[i][colNum] = playerNum;
                 return true;
             }
         }
@@ -149,19 +156,32 @@ int main(int argc, char ** argv){
     ofstream outFile;
     int playerTurn;
     int gameMode;
+    bool humanTurn = false;
 
 
     // Command Line
     if (argc != 5){
-        cout << "Not all required arguments used";
+wrongArgs:
+        cout << "Four command-line arguments are needed: " << endl;
+        cout << "Usage " << argv[0] << " interavtive [input file] [computer-next/human-next] [depth]" << endl;
+        cout << "or "<< argv[0] << " one-move [input_file] [output_file] [depth]" << endl;
         return 0;
     } 
     // Game Mode
     string gamemode_str = argv[1];
     if (gamemode_str=="one-move"){
         gameMode = 1;
+        
     } else if (gamemode_str=="interactive"){
         gameMode = 2;
+        string next_str = argv[3];
+        if (next_str=="human-next"){
+            humanTurn = true;
+        } else if (next_str=="computer-next"){
+            humanTurn = false;
+        } else {
+            goto wrongArgs;
+        }
     } else {
         cout << "Game mode is either 'one-move' or 'interactive' " << endl;
         return 0;
@@ -215,10 +235,11 @@ int main(int argc, char ** argv){
     // Interactive mode
     if (gameMode == 2){
         // Step 1) If Computer goes first, go to 2, else go to 5
-        if (true) goto step5;
+        if (humanTurn) goto step5;
 
 step2:
         // Step 2) print game board and score. Exit if board is full
+        
         myGame->printBoard();
         if (myGame->canGo()) {
             cout << "Board is full. Game Over" << endl;
@@ -230,8 +251,11 @@ step2:
 
         // Step 4) Save board state in computer.txt
 
+        humanTurn = true;
+
 step5:
         // Step 5) print game board and score. Exit if board is full
+        
         myGame->printBoard();
         if (myGame->canGo()) {
             cout << "Board is full. Game Over" << endl;
@@ -243,7 +267,7 @@ step5:
             cout << "Choose a column (1-7): ";
             getline(cin,colToGo_str);
             int colToGo = stoi(colToGo_str);
-            if (colToGo >= 1 && colToGo <= 7 && myGame->placePiece(colToGo-1,2)){
+            if (colToGo >= 1 && colToGo <= 7 && myGame->placePiece(colToGo-1,playerTurn)){
                 break;
             } else {
                 cout << "That is not a valid row. Please try again" << endl;
@@ -251,6 +275,8 @@ step5:
         }
 
         // Step 7) Save state as human.txt
+
+        humanTurn = false;
         
 
         // Step 8) Goto 2
