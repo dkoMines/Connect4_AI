@@ -8,6 +8,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <sstream>
 
 using namespace std;
 
@@ -146,17 +147,40 @@ public:
 
     }
 
+    void writeBoardtoFile(string fileName, int playerTurn){
+        ofstream outFile;
+        outFile.open(fileName);
+        for (int i=MAX_ROWS-1;i>=0;i--){
+            string line = "";
+            for (int j=0;j<MAX_COLS;j++){
+                stringstream ss;
+                ss << board[i][j];
+                string s;
+                ss >> s;
+                line = line + s;
+            }
+            outFile << line << '\n';
+        }
+        outFile << playerTurn;
+        outFile.close();
+    }
+
 
 };
+
+int flipPlayer(int playerTurn){
+    if (playerTurn==1) return 2;
+    return 1;
+}
 
 
 int main(int argc, char ** argv){
     // Important Vars
     Connect4* myGame = new Connect4();
-    ofstream outFile;
     int playerTurn;
     int gameMode;
     bool humanTurn = false;
+    string outputFile;
 
 
     // Command Line
@@ -171,7 +195,7 @@ wrongArgs:
     string gamemode_str = argv[1];
     if (gamemode_str=="one-move"){
         gameMode = 1;
-        
+        outputFile = argv[3];        
     } else if (gamemode_str=="interactive"){
         gameMode = 2;
         string next_str = argv[3];
@@ -189,19 +213,23 @@ wrongArgs:
     // Input File
     ifstream inFile;
     inFile.open(argv[2]);
-    string line;
-    int countRow = 0;
-    while (getline(inFile, line)){
-        if (countRow<6){
-            myGame->replaceRow(line,countRow);
-        } else {
-            playerTurn = stoi(line);
+    if (!inFile.is_open()){
+        // Board is already set to 0's.
+        playerTurn = 1;
+    } else {
+        // If file exists, replace the rows.
+        string line;
+        int countRow = 0;
+        while (getline(inFile, line)){
+            if (countRow<6){
+                myGame->replaceRow(line,countRow);
+            } else {
+                playerTurn = stoi(line);
+            }
+            countRow++;
         }
-        countRow++;
+        inFile.close();
     }
-    inFile.close();
-    // Open Output File
-    // outFile.open(argv[3]);
     // Get Depth
     int depth = stoi(argv[4]);
 
@@ -209,20 +237,24 @@ wrongArgs:
 
     // one-move
     if (gameMode == 1){
-        // 1) Read input file and initialize board state and score
+        // 1) Read input file and initialize board state and score ( Done above )
 
-        // 2) Print current board state and score and end if full
-            myGame->printBoard();
-            if (myGame->canGo()) {
-                cout << "Board is full. Game Over" << endl;
-                goto programEnd;
-            }
+         // 2) Print current board state and score and end if full
+        myGame->printBoard();
+        if (myGame->canGo()) {
+            cout << "Board is full. Game Over" << endl;
+            goto programEnd;
+        }
 
         // 3) Cpu makes its next move
+        // TODO
 
         // 4) Print current board state and score
+        myGame->printBoard();
 
         // 5) Save current board state to the output file 
+        playerTurn = flipPlayer(playerTurn);
+        myGame->writeBoardtoFile(outputFile,playerTurn);
 
         // 6) Exit
         goto programEnd;
@@ -232,7 +264,7 @@ wrongArgs:
 
 
 
-    // Interactive mode
+    // ========================== Interactive mode ===================================
     if (gameMode == 2){
         // Step 1) If Computer goes first, go to 2, else go to 5
         if (humanTurn) goto step5;
@@ -247,10 +279,11 @@ step2:
         }
 
         // Step 3) Computer Chooses next move
-
+        // TODO
 
         // Step 4) Save board state in computer.txt
-
+        playerTurn = flipPlayer(playerTurn);
+        myGame->writeBoardtoFile("computer.txt",playerTurn);
         humanTurn = true;
 
 step5:
@@ -275,10 +308,10 @@ step5:
         }
 
         // Step 7) Save state as human.txt
-
+        playerTurn = flipPlayer(playerTurn);
+        myGame->writeBoardtoFile("human.txt",playerTurn);
         humanTurn = false;
         
-
         // Step 8) Goto 2
         goto step2;
     }
