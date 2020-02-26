@@ -308,18 +308,18 @@ public:
 pair<int,int> minimax(int depthLeft, int playerTurn, Connect4* myGame, bool max){
     vector<pair<int,int>> utilityTracker; // For the pair, col num, then it is the utility.
     depthLeft --;
-    int utility;
+    float utility;
     // Check the cols
     for (int j=0;j<MAX_COLS;j++){
-        Connect4* newGame = new Connect4();
-        newGame->copyBoard(myGame);
-        if (!newGame->filled(j)){
-            // It is possible to go here
+        if (!myGame->filled(j)){ // It is possible to go here, lets try it out
+            Connect4* newGame = new Connect4();
+            newGame->copyBoard(myGame);
             newGame->placePiece(j,playerTurn);
+
             if (depthLeft>0){
                 utility = minimax(depthLeft, flipPlayer(playerTurn) ,newGame, !max).second;
             } else if (depthLeft==0){
-                // Gotta get those Utility numbers
+                // Utility is calculated at the leaf
                 // Player1 up is positive, Player2 up is negative
                 utility = newGame->evaluationFunction();
             }
@@ -329,7 +329,12 @@ pair<int,int> minimax(int depthLeft, int playerTurn, Connect4* myGame, bool max)
             utilityTracker.push_back(colUtil);
         }
     }
-    // MMk, we have utility for all 7 rows. 
+    // Find our best row utility
+    for (int i=0;i<utilityTracker.size();i++){
+
+    }
+
+
     return utilityTracker[0];
 
 
@@ -339,10 +344,17 @@ pair<int,int> minimax(int depthLeft, int playerTurn, Connect4* myGame, bool max)
 }
 
 int cpuPlays(int depth, int playerTurn, Connect4* myGame){
-    minimax(depth,playerTurn,myGame, true);
+    // minimax(depth,playerTurn,myGame, true);
 
+    // Temporary Random Placement
+    while (true){
+        int output = 1 + (rand() % static_cast<int>(7 - 1 + 1));
+        if (!myGame->filled(output)){
+            myGame->placePiece(output,playerTurn);
+            return output;
+        }
+    }
     
-    return 1;
 }
 
 
@@ -422,7 +434,7 @@ wrongArgs:
         }
 
         // 3) Cpu makes its next move
-        // TODO
+        cpuPlays(depth,playerTurn,myGame);
 
         // 4) Print current board state and score
         myGame->printBoard();
@@ -454,7 +466,7 @@ step2:
         }
 
         // Step 3) Computer Chooses next move
-        // TODO
+        cpuPlays(depth,playerTurn,myGame);
 
         // Step 4) Save board state in computer.txt
         playerTurn = flipPlayer(playerTurn);
