@@ -206,25 +206,22 @@ public:
         // Horizontal Utility
         for (int pieceToCheck = 1; pieceToCheck < 3; pieceToCheck++){
             float utilityAdd = 0;
-            for (int i=0;i<MAX_ROWS;i++){
+            for (int i=0;i<MAX_ROWS-3;i++){
                 float countPoss = 0;
                 float countPieces = 0;
-                for (int j=0;j<MAX_COLS;j++){
-                    if (board[i][j]==pieceToCheck){
-                        countPieces ++;
-                    } else if (board[i][j] == 0){
-                        countPoss ++;
-                    } else {
-                        // Enemy Piece is blocking. Reset counters
-                        if (countPoss >=4 && countPieces==2){ // There is a threat filled by 2/4 pieces
-                            utilityAdd += weighting[2];
-                        } else if (countPoss >=4 && countPieces==3){ // There is a threat filled by 3/4 pieces
-                            utilityAdd += weighting[1];
-                        } else if (countPoss >=4 && countPieces>=4 && countPoss>countPieces){  // This should be a similar threat as 3 threat as it could be 4 that goes to 5 ~ +1 points
-                            utilityAdd += weighting[1];
+                for (int j=0;j<MAX_COLS-3;j++){
+                    int pieces = 0;
+                    for (int count = 0;count<4;count++){
+                        if (board[i][j+count]==pieceToCheck){
+                            pieces++;
+                        } else if (board[i][j+count]!=0){
+                            pieces = -10;
                         }
-                        countPoss = 0;
-                        countPieces = 0;
+                    }
+                    if (pieces==2){
+                        utilityAdd += weighting[2]; // 2/4 threats
+                    } else if (pieces==3){
+                        utilityAdd += weighting[1]; // 3/4 threats
                     }
                 }
             }
@@ -268,7 +265,7 @@ public:
                     for (int count = 0;count<4;count++){
                         if (board[i+count][j+count]==pieceToCheck){
                             pieces++;
-                        } else if (board[i+count][j+count]!=pieceToCheck){
+                        } else if (board[i+count][j+count]!=0){
                             pieces = -10;
                         }
                     }
@@ -286,7 +283,7 @@ public:
                     for (int count = 0;count<4;count++){
                         if (board[i+count][j-count]==pieceToCheck){
                             pieces++;
-                        } else if (board[i+count][j-count]!=pieceToCheck){
+                        } else if (board[i+count][j-count]!=0){
                             pieces = -10;
                         }
                     }
@@ -303,8 +300,6 @@ public:
                 finalScore.second += utilityAdd;
             }
         }
-
-
         return finalScore.first - finalScore.second;
     }
 };
@@ -415,7 +410,7 @@ wrongArgs:
 
     
 
-    // one-move
+    // ======================= one-move ====================================
     if (gameMode == 1){
         // 1) Read input file and initialize board state and score ( Done above )
 
@@ -470,6 +465,7 @@ step5:
         // Step 5) print game board and score. Exit if board is full
         
         myGame->printBoard();
+        cout << myGame->evaluationFunction();
         if (myGame->canGo()) {
             cout << "Board is full. Game Over" << endl;
             goto programEnd;
