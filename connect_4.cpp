@@ -348,7 +348,7 @@ pair<int,float> minimax(int depthLeft, int playerTurn, Connect4* myGame, bool ma
                 // Utility is calculated at the leaf
                 // Player1 up is positive, Player2 up is negative
                 utility = newGame->evaluationFunction();
-                cout << "Col: "<< j+1 <<" Utility: " << utility << endl;
+                // cout << "Col: "<< j+1 <<" Utility: " << utility << endl;
 
             }
             pair<int,float> colUtil;
