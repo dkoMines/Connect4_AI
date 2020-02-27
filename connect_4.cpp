@@ -92,7 +92,7 @@ public:
     }
 
     // Will return false if all 42 pieces are filled
-    bool canGo(){
+    bool gameOver(){
         for (int i=0;i<MAX_COLS;i++){
             if (!filled(i)){
                 return false;
@@ -192,13 +192,16 @@ public:
     }
 
     float evaluationFunction(){ // This will give a utility 
-        float weighting[6] = {1,.25,.1}; // This is the weighting of our utilities
+        countScore();
+        float weighting[6] = {1,.45,.1}; // This is the weighting of our utilities
         // First  is straight up 4 in a rows
         // Second  is 3/4 in a row threats
         // Third  is 2/4 threats
         pair<float,float> finalScore;
-        finalScore.first = player1Score*weighting[0];
-        finalScore.second = player2Score*weighting[0];
+        finalScore.first = 0;
+        finalScore.second = 0;
+        finalScore.first += player1Score;
+        finalScore.second += player2Score;
 
         // Additional ways to build scores
         // Check threat cells ~ if can get 4 in a row. 
@@ -336,13 +339,17 @@ pair<int,float> minimax(int depthLeft, int playerTurn, Connect4* myGame, bool ma
             Connect4* newGame = new Connect4();
             newGame->copyBoard(myGame);
             newGame->placePiece(j,playerTurn);
-            if (depthLeft>0){
-                utility = minimax(depthLeft, flipPlayer(playerTurn) ,newGame, !max).second;
-            } else if (depthLeft==0){
+            if (depthLeft>0&&!newGame->gameOver()){
+                utility = minimax(depthLeft, flipPlayer(playerTurn) ,newGame, max).second;
+            } else if(depthLeft>0 && newGame->gameOver()){
+                newGame->countScore();
+                utility = newGame->getPlayer1Score()-newGame->getPlayer2Score();
+            }else if (depthLeft==0){
                 // Utility is calculated at the leaf
                 // Player1 up is positive, Player2 up is negative
-                pair<int,int> colUtil;
                 utility = newGame->evaluationFunction();
+                cout << "Col: "<< j+1 <<" Utility: " << utility << endl;
+
             }
             pair<int,float> colUtil;
             colUtil.first = j;
@@ -364,12 +371,12 @@ pair<int,float> minimax(int depthLeft, int playerTurn, Connect4* myGame, bool ma
         maximizedUtil = INT8_MAX;
     }
     for (int i=0;i<utilityTracker.size();i++){
-        if (highNum){
+        if (highNum){ // Want 1 to be maximized
             if (utilityTracker[i].second > maximizedUtil){
                 maximizedUtil = utilityTracker[i].second;
                 bestIndex = i;
             }
-        } else {
+        } else {    // Want 2 to be maximized
             if (utilityTracker[i].second < maximizedUtil){
                 maximizedUtil = utilityTracker[i].second;
                 bestIndex = i;
@@ -459,7 +466,7 @@ wrongArgs:
 
          // 2) Print current board state and score and end if full
         myGame->printBoard();
-        if (myGame->canGo()) {
+        if (myGame->gameOver()) {
             cout << "Board is full. Game Over" << endl;
             goto programEnd;
         }
@@ -491,7 +498,7 @@ step2:
         // Step 2) print game board and score. Exit if board is full
         
         myGame->printBoard();
-        if (myGame->canGo()) {
+        if (myGame->gameOver()) {
             cout << "Board is full. Game Over" << endl;
             goto programEnd;
         }
@@ -508,8 +515,7 @@ step5:
         // Step 5) print game board and score. Exit if board is full
         
         myGame->printBoard();
-        cout << myGame->evaluationFunction();
-        if (myGame->canGo()) {
+        if (myGame->gameOver()) {
             cout << "Board is full. Game Over" << endl;
             goto programEnd;
         }
