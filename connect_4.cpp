@@ -9,6 +9,7 @@
 #include <fstream>
 #include <vector>
 #include <sstream>
+#include <utility>
 
 using namespace std;
 
@@ -191,13 +192,11 @@ public:
     }
 
     float evaluationFunction(){ // This will give a utility 
-        float weighting[6] = {1,.5,.25}; // This is the weighting of our utilities
+        float weighting[6] = {1,.25,.1}; // This is the weighting of our utilities
         // First  is straight up 4 in a rows
         // Second  is 3/4 in a row threats
         // Third  is 2/4 threats
         pair<float,float> finalScore;
-        float p1Eval = player1Score;
-        float p2Eval = player2Score;
         finalScore.first = player1Score*weighting[0];
         finalScore.second = player2Score*weighting[0];
 
@@ -236,16 +235,19 @@ public:
             float utilityAdd = 0;
             for (int j=0;j<MAX_COLS;j++){
                 int pieceCount = 0;
+                int piecesLeft = 0;
                 for (int i=0;i<MAX_ROWS;i++){
                     if (board[i][j]==pieceToCheck){
                         pieceCount ++;
                     } else if (board[i][j] != 0){
                         pieceCount = 0;
+                    } else {
+                        piecesLeft ++;
                     }
                 }
-                if (pieceCount==2){
+                if (pieceCount==2 && piecesLeft >= 2){
                     utilityAdd += weighting[2]; // 2 in a row threat
-                } else if (pieceCount==3){
+                } else if (pieceCount==3 && piecesLeft >= 1){
                     utilityAdd += weighting[1]; // 3 in a row threat
                 }
             }
@@ -305,8 +307,8 @@ public:
 };
 
 // This will help us determine where the player should go to next. Pair is returned as col, utility
-pair<int,int> minimax(int depthLeft, int playerTurn, Connect4* myGame, bool max){
-    vector<pair<int,int>> utilityTracker; // For the pair, col num, then it is the utility.
+pair<int,float> minimax(int depthLeft, int playerTurn, Connect4* myGame, bool max){
+    vector<pair<int,float>> utilityTracker; // For the pair, col num, then it is the utility.
     depthLeft --;
     float utility;
     // Check the cols
@@ -315,46 +317,65 @@ pair<int,int> minimax(int depthLeft, int playerTurn, Connect4* myGame, bool max)
             Connect4* newGame = new Connect4();
             newGame->copyBoard(myGame);
             newGame->placePiece(j,playerTurn);
-
             if (depthLeft>0){
                 utility = minimax(depthLeft, flipPlayer(playerTurn) ,newGame, !max).second;
             } else if (depthLeft==0){
                 // Utility is calculated at the leaf
                 // Player1 up is positive, Player2 up is negative
+                pair<int,int> colUtil;
                 utility = newGame->evaluationFunction();
             }
-            pair<int,int> colUtil;
+            pair<int,float> colUtil;
             colUtil.first = j;
             colUtil.second = utility;
+            cout << "Col: " << colUtil.first << " Utility: " << colUtil.second << endl;
             utilityTracker.push_back(colUtil);
         }
     }
     // Find our best row utility
+    bool highNum;
+    float maximizedUtil;
+    int bestIndex;
+    if ((max && playerTurn==1) || (!max && playerTurn==2)){
+        // We want utility to be as high as possible
+        highNum = true;
+        maximizedUtil = INT8_MAX*-1;
+    } else {
+        // We want utility to be as low as possible
+        highNum = false;
+        maximizedUtil = INT8_MAX;
+    }
     for (int i=0;i<utilityTracker.size();i++){
-
+        cout << utilityTracker[i].first << " " << utilityTracker[i].second << ",";
+        if (highNum){
+            if (utilityTracker[i].second > maximizedUtil){
+                maximizedUtil = utilityTracker[i].second;
+                bestIndex = i;
+            }
+        } else {
+            if (utilityTracker[i].second < maximizedUtil){
+                maximizedUtil = utilityTracker[i].second;
+                bestIndex = i;
+            }
+        }
     }
 
-
-    return utilityTracker[0];
-
-
-
-
+    return utilityTracker[bestIndex];
 
 }
 
 int cpuPlays(int depth, int playerTurn, Connect4* myGame){
-    // minimax(depth,playerTurn,myGame, true);
+    minimax(depth,playerTurn,myGame, true).first;
 
     // Temporary Random Placement
     while (true){
         int output = 1 + (rand() % static_cast<int>(7 - 1 + 1));
         if (!myGame->filled(output)){
-            myGame->placePiece(output,playerTurn);
-            return output;
+            // myGame->placePiece(output,playerTurn);
+            return 0;
         }
     }
-    
+
 }
 
 
@@ -466,7 +487,7 @@ step2:
         }
 
         // Step 3) Computer Chooses next move
-        cpuPlays(depth,playerTurn,myGame);
+        myGame->placePiece(cpuPlays(depth,playerTurn,myGame),playerTurn);
 
         // Step 4) Save board state in computer.txt
         playerTurn = flipPlayer(playerTurn);
