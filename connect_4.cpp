@@ -48,9 +48,11 @@ public:
         return board[i][j];
     }
     int getPlayer1Score(){
+        countScore();
         return player1Score;
     }
     int getPlayer2Score(){
+        countScore();
         return player2Score;
     }
 
@@ -193,7 +195,7 @@ public:
 
     float evaluationFunction(){ // This will give a utility 
         countScore();
-        float weighting[6] = {1,.45,.1}; // This is the weighting of our utilities
+        float weighting[6] = {1,.045,.01}; // This is the weighting of our utilities
         // First  is straight up 4 in a rows
         // Second  is 3/4 in a row threats
         // Third  is 2/4 threats
@@ -329,67 +331,75 @@ public:
 };
 
 // This will help us determine where the player should go to next. Pair is returned as col, utility
-pair<int,float> minimax(int depthLeft, int playerTurn, Connect4* myGame, bool max){
+pair<int,float> minimax(int depthLeft, int playerTurn, Connect4* myGame, float alpha, float beta){
     vector<pair<int,float>> utilityTracker; // For the pair, col num, then it is the utility.
     depthLeft --;
     float utility;
+    bool doPruning = false;
+    bool highNum;
+    float maximizedUtil;
+    int bestCol;
+    // Player 1 wants highest utility while player 2 wants as low as possible
+    if (playerTurn==1){
+        highNum = true;
+        maximizedUtil = INT8_MAX*-1;
+    } else {
+        highNum = false;
+        maximizedUtil = INT8_MAX;
+    }
+
     // Check the cols
     for (int j=0;j<MAX_COLS;j++){
         if (!myGame->filled(j)){ // It is possible to go here, lets try it out
             Connect4* newGame = new Connect4();
             newGame->copyBoard(myGame);
             newGame->placePiece(j,playerTurn);
-            if (depthLeft>0&&!newGame->gameOver()){
-                utility = minimax(depthLeft, flipPlayer(playerTurn) ,newGame, max).second;
-            } else if(depthLeft>0 && newGame->gameOver()){
+            if (depthLeft==0){
+                utility = newGame->evaluationFunction();
+            } else if (newGame->gameOver()){
                 newGame->countScore();
                 utility = newGame->getPlayer1Score()-newGame->getPlayer2Score();
-            }else if (depthLeft==0){
-                // Utility is calculated at the leaf
-                // Player1 up is positive, Player2 up is negative
-                utility = newGame->evaluationFunction();
-                // cout << "Col: "<< j+1 <<" Utility: " << utility << endl;
+            } else {
+                doPruning = true;
+                utility = minimax(depthLeft, flipPlayer(playerTurn) ,newGame,alpha,beta).second;
+            }
+            if (highNum){
+                if (utility > maximizedUtil){
+                    maximizedUtil = utility;
+                    bestCol = j;
+                    if (doPruning){
+                        alpha = max(alpha,maximizedUtil);
+                        if (beta <= alpha){
+                            cout << "Pruning" << endl;
+                            break;
+                        }
+                    }
+                }
 
-            }
-            pair<int,float> colUtil;
-            colUtil.first = j;
-            colUtil.second = utility;
-            utilityTracker.push_back(colUtil);
-        }
-    }
-    // Find our best row utility
-    bool highNum;
-    float maximizedUtil;
-    int bestIndex;
-    if ((max && playerTurn==1) || (!max && playerTurn==2)){
-        // We want utility to be as high as possible
-        highNum = true;
-        maximizedUtil = INT8_MAX*-1;
-    } else {
-        // We want utility to be as low as possible
-        highNum = false;
-        maximizedUtil = INT8_MAX;
-    }
-    for (int i=0;i<utilityTracker.size();i++){
-        if (highNum){ // Want 1 to be maximized
-            if (utilityTracker[i].second > maximizedUtil){
-                maximizedUtil = utilityTracker[i].second;
-                bestIndex = i;
-            }
-        } else {    // Want 2 to be maximized
-            if (utilityTracker[i].second < maximizedUtil){
-                maximizedUtil = utilityTracker[i].second;
-                bestIndex = i;
+            } else {
+                if (utility < maximizedUtil){
+                    maximizedUtil = utility;
+                    bestCol = j;
+                    if (doPruning){
+                        beta = min(beta,maximizedUtil);
+                        if (beta >= alpha){
+                            cout << "Pruning" << endl;
+                            break;
+                        }
+                    }
+                }
             }
         }
     }
-
-    return utilityTracker[bestIndex];
+    pair<int,float> answer;
+    answer.first = bestCol;
+    answer.second = maximizedUtil;
+    return answer;
 
 }
 
 int cpuPlays(int depth, int playerTurn, Connect4* myGame){
-    pair<int,float> getMinimax = minimax(depth,playerTurn,myGame, true);
+    pair<int,float> getMinimax = minimax(depth,playerTurn,myGame, -1*INT8_MAX, INT8_MAX);
     // cout << "Best utility: " << getMinimax.second << endl;
     return getMinimax.first;
 
