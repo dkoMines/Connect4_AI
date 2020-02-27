@@ -193,7 +193,7 @@ public:
 
     float evaluationFunction(){ // This will give a utility 
         countScore();
-        float weighting[6] = {1,.45,.1}; // This is the weighting of our utilities
+        float weighting[6] = {1,.05,.01}; // This is the weighting of our utilities
         // First  is straight up 4 in a rows
         // Second  is 3/4 in a row threats
         // Third  is 2/4 threats
@@ -329,7 +329,7 @@ public:
 };
 
 // This will help us determine where the player should go to next. Pair is returned as col, utility
-pair<int,float> minimax(int depthLeft, int playerTurn, Connect4* myGame, bool max){
+pair<int,float> minimax(int depthLeft, int playerTurn, Connect4* myGame, bool max, int alpha, int beta){
     vector<pair<int,float>> utilityTracker; // For the pair, col num, then it is the utility.
     depthLeft --;
     float utility;
@@ -340,7 +340,7 @@ pair<int,float> minimax(int depthLeft, int playerTurn, Connect4* myGame, bool ma
             newGame->copyBoard(myGame);
             newGame->placePiece(j,playerTurn);
             if (depthLeft>0&&!newGame->gameOver()){
-                utility = minimax(depthLeft, flipPlayer(playerTurn) ,newGame, max).second;
+                utility = minimax(depthLeft, flipPlayer(playerTurn) ,newGame, max, alpha, beta).second;
             } else if(depthLeft>0 && newGame->gameOver()){
                 newGame->countScore();
                 utility = newGame->getPlayer1Score()-newGame->getPlayer2Score();
@@ -361,12 +361,15 @@ pair<int,float> minimax(int depthLeft, int playerTurn, Connect4* myGame, bool ma
     bool highNum;
     float maximizedUtil;
     int bestIndex;
+    int best;
     if ((max && playerTurn==1) || (!max && playerTurn==2)){
         // We want utility to be as high as possible
+        best = beta; 
         highNum = true;
         maximizedUtil = INT8_MAX*-1;
     } else {
         // We want utility to be as low as possible
+        best = alpha;
         highNum = false;
         maximizedUtil = INT8_MAX;
     }
@@ -375,16 +378,26 @@ pair<int,float> minimax(int depthLeft, int playerTurn, Connect4* myGame, bool ma
             if (utilityTracker[i].second > maximizedUtil){
                 maximizedUtil = utilityTracker[i].second;
                 bestIndex = i;
+                // best = min(best, utilityTracker[i].second);
+                // alpha = min(beta, best);
+                // if(beta<=alpha){
+                //     break;
+                // }
             }
         } else {    // Want 2 to be maximized
             if (utilityTracker[i].second < maximizedUtil){
                 maximizedUtil = utilityTracker[i].second;
                 bestIndex = i;
+                // best = max(best, utilityTracker[i].second);
+                // alpha = max(alpha, best);
+                // if(beta<=alpha){
+                //     break;
+                // }
             }
         }
     }
 
-    return utilityTracker[bestIndex];
+    return utilityTracker[bestIndex].second;
 
 }
 
