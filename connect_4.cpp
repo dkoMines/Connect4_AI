@@ -215,6 +215,13 @@ public:
                             pieces++;
                         } else if (board[i][j+count]!=0){
                             pieces = -10;
+                        } else {
+                            // Need to check pieces below for 0's
+                            if (i==0 || board[i-1][j]!=0){
+                                // There is a supporting piece
+                            } else {
+                                pieces = -10;
+                            }
                         }
                     }
                     if (pieces==2){
@@ -269,6 +276,12 @@ public:
                             pieces++;
                         } else if (board[i+count][j+count]!=0){
                             pieces = -10;
+                        } else {
+                            if (i+count==0 || board[i+count-1][j+count]!=0){
+                                // There is a supporting piece
+                            } else {
+                                pieces = -10;
+                            }
                         }
                     }
                     if (pieces==2){
@@ -287,6 +300,12 @@ public:
                             pieces++;
                         } else if (board[i+count][j-count]!=0){
                             pieces = -10;
+                        } else {
+                            if (i+count==0 || board[i+count-1][j-count]!=0){
+                                // There is a supporting piece
+                            } else {
+                                pieces = -10;
+                            }
                         }
                     }
                     if (pieces==2){
@@ -328,7 +347,6 @@ pair<int,float> minimax(int depthLeft, int playerTurn, Connect4* myGame, bool ma
             pair<int,float> colUtil;
             colUtil.first = j;
             colUtil.second = utility;
-            cout << "Col: " << colUtil.first << " Utility: " << colUtil.second << endl;
             utilityTracker.push_back(colUtil);
         }
     }
@@ -346,7 +364,6 @@ pair<int,float> minimax(int depthLeft, int playerTurn, Connect4* myGame, bool ma
         maximizedUtil = INT8_MAX;
     }
     for (int i=0;i<utilityTracker.size();i++){
-        cout << utilityTracker[i].first << " " << utilityTracker[i].second << ",";
         if (highNum){
             if (utilityTracker[i].second > maximizedUtil){
                 maximizedUtil = utilityTracker[i].second;
@@ -365,16 +382,9 @@ pair<int,float> minimax(int depthLeft, int playerTurn, Connect4* myGame, bool ma
 }
 
 int cpuPlays(int depth, int playerTurn, Connect4* myGame){
-    minimax(depth,playerTurn,myGame, true).first;
-
-    // Temporary Random Placement
-    while (true){
-        int output = 1 + (rand() % static_cast<int>(7 - 1 + 1));
-        if (!myGame->filled(output)){
-            // myGame->placePiece(output,playerTurn);
-            return 0;
-        }
-    }
+    pair<int,float> getMinimax = minimax(depth,playerTurn,myGame, true);
+    // cout << "Best utility: " << getMinimax.second << endl;
+    return getMinimax.first;
 
 }
 
