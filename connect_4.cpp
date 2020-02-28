@@ -486,7 +486,7 @@ wrongArgs:
         }
 
         // 3) Cpu makes its next move
-        cpuPlays(depth,playerTurn,myGame);
+        myGame->placePiece(cpuPlays(depth,playerTurn,myGame),playerTurn);
 
         // 4) Print current board state and score
         myGame->printBoard();
