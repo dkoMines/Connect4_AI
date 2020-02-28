@@ -25,5 +25,3 @@ utility and subtracting it by the next player's utility. In this way, we could f
 player's move the smallest utility and continue coming back up the tree. We set higher precedence for the middle columns of the board
 for the computer, and gave higher utility for 4 in a row, then 3 in a row, and then lastly 2 in a row. The 4 in a row utility is also
 much higher than the other two to give higher precedence in scoring / preventing points. 
-
-That's all she wrote. :)
