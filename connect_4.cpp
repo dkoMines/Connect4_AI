@@ -348,8 +348,10 @@ pair<int,float> minimax(int depthLeft, int playerTurn, Connect4* myGame, float a
         maximizedUtil = INT8_MAX;
     }
 
+    vector<int> colPrio = {3,2,4,1,5,0,6};
+
     // Check the cols
-    for (int j=0;j<MAX_COLS;j++){
+    for (int j : colPrio){
         if (!myGame->filled(j)){ // It is possible to go here, lets try it out
             Connect4* newGame = new Connect4();
             newGame->copyBoard(myGame);
@@ -370,7 +372,8 @@ pair<int,float> minimax(int depthLeft, int playerTurn, Connect4* myGame, float a
                     if (doPruning){
                         alpha = max(alpha,maximizedUtil);
                         if (beta <= alpha){
-                            cout << "Pruning" << endl;
+                            // cout << "A: " << alpha << "B: "<<beta<<" MAX: " << maximizedUtil << endl;
+                            // cout << "Pruning" << endl;
                             break;
                         }
                     }
@@ -382,8 +385,9 @@ pair<int,float> minimax(int depthLeft, int playerTurn, Connect4* myGame, float a
                     bestCol = j;
                     if (doPruning){
                         beta = min(beta,maximizedUtil);
-                        if (beta >= alpha){
-                            cout << "Pruning" << endl;
+                        if (beta <= alpha){
+                            // cout << "A: " << alpha << "B: "<<beta<<" MAX: " << maximizedUtil << endl;
+                            // cout << "Pruning" << endl;
                             break;
                         }
                     }
